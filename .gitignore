@@ -1,3 +1,10 @@
+#Visual Studio Local Files
+.vs*
+*.vcx*
+*.sln
+x64
+x86
+
 # Prerequisites
 *.d
 
