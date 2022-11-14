@@ -1,10 +1,14 @@
 #include <SFML/Graphics.hpp>
+#include <sstream>
 using namespace sf;
+using namespace std;
 
 int main()
 {
 	Event event;
 	Clock clock;
+	bool paused = true;
+	int score = 0;
 
 	// Create a video mode object
 
@@ -13,6 +17,43 @@ int main()
 
 	// Create and open a window for the game
 	RenderWindow window(monitor, "Timber!!!", Style::Default);
+
+	// Creating Text
+	Text messageText;
+	Text scoreText;
+
+	Font font;
+	font.loadFromFile("fonts/KOMIKAP_.ttf");
+
+	messageText.setFont(font);
+	scoreText.setFont(font);
+	messageText.setFillColor(Color::White);
+	scoreText.setFillColor(Color::White);
+
+	messageText.setString("Press Enter to start!");
+	scoreText.setString("Score = 0");
+
+	messageText.setCharacterSize(75);
+	scoreText.setCharacterSize(100);
+
+	FloatRect textRect = messageText.getLocalBounds();
+	messageText.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
+	messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
+	scoreText.setPosition(20, 20);
+
+	// Creating the time bar
+	RectangleShape timeBar;
+	float timeBarStartWidth = 400;
+	float timeBarHeight = 80;
+
+	timeBar.setSize(Vector2f(timeBarStartWidth, timeBarHeight));
+	timeBar.setFillColor(Color::Red);
+	timeBar.setPosition((1920 / 2) - timeBarStartWidth / 2, 980);
+
+	Time gameTimeTotal;
+	float timeRemaining = 6.0f;
+	float timeBarWidthPerSecond = timeBarStartWidth / timeRemaining;
+
 
 	// Create a texture to hold a graphic on the GPU
 	Texture textureBackground;
@@ -84,6 +125,13 @@ int main()
 			{
 				window.close();
 			}
+
+			if(Keyboard::isKeyPressed(Keyboard::Return))
+			{
+				paused = false;
+				score = 0;
+				timeRemaining = 6;
+			}
 		}
 		/*
 		****************************************
@@ -91,111 +139,133 @@ int main()
 		****************************************
 		*/
 
-		// Measuring Time
-		Time dt = clock.restart();
-
-		// Setting up the Bee
-		if(!beeActive)
+		if(!paused)
 		{
-			// How fast the Bee is
-			srand((int)time(0));
-			beeSpeed = (rand()% 200) + 200;
+			// Measuring Time
+			Time dt = clock.restart();
 
-			// How high the Bee is
-			srand((int)time(0) * 10);
-			float height = (rand() % 500) + 500;
-			spriteBee.setPosition(2000, height);
+			// Resizing the time bar
+			timeRemaining -= dt.asSeconds();
+			timeBar.setSize(Vector2f(timeBarWidthPerSecond * timeRemaining, timeBarHeight));
 
-			beeActive = true;
-		}
-		else
-		// Moving the Bee
-		{
-			spriteBee.setPosition(spriteBee.getPosition().x - (beeSpeed * dt.asSeconds()), spriteBee.getPosition().y);
-
-			// Detect if bee reaches left-hand edge of screen
-			if(spriteBee.getPosition().x < - 100)
+			if(timeRemaining <= 0.0f)
 			{
-				beeActive = false;
+				paused = true;
+
+				messageText.setString("Im sorry, but you have run out of time!");
+				FloatRect textRect = messageText.getLocalBounds();
+
+				messageText.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
+				messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
 			}
-		}
 
-		// Setting up the Clouds
-		// Cloud #1
-		if(!cloud1Active)
-		{
-			// How fast the Cloud is
-			srand((int)time(0) * 10);
-			cloud1Speed = (rand() % 200);
-
-			// How high the Cloud is
-			srand((int)time(0) * 10);
-			float height = (rand() % 150);
-			spriteCloud1.setPosition(-200, height);
-
-			cloud1Active = true;
-		}
-		else
-		{
-			spriteCloud1.setPosition(spriteCloud1.getPosition().x + (cloud1Speed * dt.asSeconds()), spriteCloud1.getPosition().y);
-
-			// Detect if the cloud reaches the right edge of screen
-			if(spriteCloud1.getPosition().x > 1920)
+			// Setting up the Bee
+			if(!beeActive)
 			{
-				cloud1Active = false;
+				// How fast the Bee is
+				srand((int)time(0));
+				beeSpeed = (rand()% 200) + 200;
+
+				// How high the Bee is
+				srand((int)time(0) * 10);
+				float height = (rand() % 500) + 500;
+				spriteBee.setPosition(2000, height);
+
+				beeActive = true;
 			}
-		}
-
-		// Cloud #2
-		if(!cloud2Active)
-		{
-			// How fast the Cloud is
-			srand((int)time(0) * 20);
-			cloud2Speed = (rand() % 200);
-
-			// How high the Cloud is
-			srand((int)time(0) * 20);
-			float height = (rand() % 300) - 150;
-			spriteCloud2.setPosition(-200, height);
-
-			cloud2Active = true;
-		}
-		else
-		{
-			spriteCloud2.setPosition(spriteCloud2.getPosition().x + (cloud2Speed * dt.asSeconds()), spriteCloud2.getPosition().y);
-
-			// Detect if the cloud reaches the right edge of screen
-			if(spriteCloud2.getPosition().x > 1920)
+			else
+			// Moving the Bee
 			{
-				cloud2Active = false;
+				spriteBee.setPosition(spriteBee.getPosition().x - (beeSpeed * dt.asSeconds()), spriteBee.getPosition().y);
+
+				// Detect if bee reaches left-hand edge of screen
+				if(spriteBee.getPosition().x < - 100)
+				{
+					beeActive = false;
+				}
 			}
-		}
 
-		// Cloud #3
-		if(!cloud3Active)
-		{
-			// How fast the Cloud is
-			srand((int)time(0) * 30);
-			cloud3Speed = (rand() % 200);
-
-			// How high the Cloud is
-			srand((int)time(0) * 30);
-			float height = (rand() % 450) - 150;
-			spriteCloud3.setPosition(-200, height);
-
-			cloud3Active = true;
-		}
-		else
-		{
-			spriteCloud3.setPosition(spriteCloud3.getPosition().x + (cloud3Speed * dt.asSeconds()), spriteCloud3.getPosition().y);
-
-			// Detect if the cloud reaches the right edge of screen
-			if(spriteCloud3.getPosition().x > 1920)
+			// Setting up the Clouds
+			// Cloud #1
+			if(!cloud1Active)
 			{
-				cloud3Active = false;
-			}
-		}
+				// How fast the Cloud is
+				srand((int)time(0) * 10);
+				cloud1Speed = (rand() % 200);
 
+				// How high the Cloud is
+				srand((int)time(0) * 10);
+				float height = (rand() % 150);
+				spriteCloud1.setPosition(-200, height);
+
+				cloud1Active = true;
+			}
+			else
+			{
+				spriteCloud1.setPosition(spriteCloud1.getPosition().x + (cloud1Speed * dt.asSeconds()), spriteCloud1.getPosition().y);
+
+				// Detect if the cloud reaches the right edge of screen
+				if(spriteCloud1.getPosition().x > 1920)
+				{
+					cloud1Active = false;
+				}
+			}
+
+			// Cloud #2
+			if(!cloud2Active)
+			{
+				// How fast the Cloud is
+				srand((int)time(0) * 20);
+				cloud2Speed = (rand() % 200);
+
+				// How high the Cloud is
+				srand((int)time(0) * 20);
+				float height = (rand() % 300) - 150;
+				spriteCloud2.setPosition(-200, height);
+
+				cloud2Active = true;
+			}
+			else
+			{
+				spriteCloud2.setPosition(spriteCloud2.getPosition().x + (cloud2Speed * dt.asSeconds()), spriteCloud2.getPosition().y);
+
+				// Detect if the cloud reaches the right edge of screen
+				if(spriteCloud2.getPosition().x > 1920)
+				{
+					cloud2Active = false;
+				}
+			}
+
+			// Cloud #3
+			if(!cloud3Active)
+			{
+				// How fast the Cloud is
+				srand((int)time(0) * 30);
+				cloud3Speed = (rand() % 200);
+
+				// How high the Cloud is
+				srand((int)time(0) * 30);
+				float height = (rand() % 450) - 150;
+				spriteCloud3.setPosition(-200, height);
+
+				cloud3Active = true;
+			}
+			else
+			{
+				spriteCloud3.setPosition(spriteCloud3.getPosition().x + (cloud3Speed * dt.asSeconds()), spriteCloud3.getPosition().y);
+
+				// Detect if the cloud reaches the right edge of screen
+				if(spriteCloud3.getPosition().x > 1920)
+				{
+					cloud3Active = false;
+				}
+			}
+
+			// Updating the score
+			stringstream ss;
+			ss << "Score = " << score;
+			scoreText.setString(ss.str());
+		}
 		/*
 		****************************************
 		Draw the scene
@@ -213,8 +283,16 @@ int main()
 		window.draw(spriteCloud3);
 
 		window.draw(spriteTree);
-
 		window.draw(spriteBee);
+
+		window.draw(scoreText);
+		window.draw(timeBar);
+
+		if(paused)
+		{
+			window.draw(messageText);
+		}
+
 
 		// Show everything we just drew
 		window.display();
